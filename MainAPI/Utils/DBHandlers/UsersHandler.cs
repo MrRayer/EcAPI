@@ -37,24 +37,24 @@ namespace MainAPI.Utils.DBHandlers
             return user;
         }
 
-        internal bool UpdateUser(User user, User updates)
+        internal bool UpdateUser(string user, User updates)
         {
             bool response;
             using (SqlConnection conn = new (Helper.ConnectionString))
             {
-                response = conn.Query<bool>($"dbo.updateUser '{user.Username}','{user.Password}'," +
+                response = conn.Query<bool>($"dbo.updateUser '{user}'," +
                     $"'{updates.Username}','{updates.Password}'," +
                     $"'{updates.Email}',''{updates.Address}").FirstOrDefault();
             }
             return response;
         }
 
-        internal User GetUser(User user)
+        internal User GetUser(string user)
         {
             User? response;
             using (SqlConnection conn = new (Helper.ConnectionString))
             {
-                var parameters = new { Id = user.Id, Username = user.Username };
+                var parameters = new { Username = user };
                 response = conn.Query<User>($"dbo.GetUser",parameters,commandType: CommandType.StoredProcedure).FirstOrDefault();
             }
             response ??= new User();

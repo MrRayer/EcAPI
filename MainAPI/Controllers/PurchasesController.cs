@@ -5,6 +5,7 @@ using MainAPI.Utils.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MainAPI.Controllers
 {
@@ -17,56 +18,61 @@ namespace MainAPI.Controllers
         {
             Handler = _handler;
         }
+        [Authorize(Policy = "LoginRequired")]
         [Route("/Purchases/UserPurchases")]
         [HttpGet]
         public IActionResult UserPurchases(string JSONId)
         {
             User? Id = JsonConvert.DeserializeObject<User>(JSONId);
-            if (Id is null) return BadRequest(NONM(Id));
+            if (Id is null) return BadRequest(MNullObject(Id));
             List<Purchase>UserPurchases = Handler.GetUserPurchases(Id);
-            if (UserPurchases is null) { return NotFound(NFM(UserPurchases)); }
+            if (UserPurchases is null) { return NotFound(MNotFound(UserPurchases)); }
             return new JsonResult(UserPurchases);
         }
 
+        [Authorize(Policy = "AdminRequired")]
         [Route("/Purchases/ShowPurchases")]
         [HttpGet]
         public IActionResult ShowPurchases()
         {
             List<Purchase> Purchases = Handler.GetAllPurchases();
-            if (Purchases is null) return NotFound(NFM(Purchases));
+            if (Purchases is null) return NotFound(MNotFound(Purchases));
             return new JsonResult(Purchases);
         }
 
+        [Authorize(Policy = "LoginRequired")]
         [Route("/Purchases/LogPurchase")]
         [HttpPost]
         public IActionResult LogPurchase(string JSONPurchase, string JSONDelivery)
         {
             Purchase? purchase = JsonConvert.DeserializeObject<Purchase>(JSONPurchase);
             List<Delivery>? delivery = JsonConvert.DeserializeObject<List<Delivery>>(JSONDelivery);
-            if (purchase is null) return BadRequest(NONM(purchase));
-            if (delivery is null) return BadRequest(NONM(delivery));
-            if (Handler.LogPurchase(purchase, delivery)) return Ok(OkM);
-            else return StatusCode(500, DBM);
+            if (purchase is null) return BadRequest(MNullObject(purchase));
+            if (delivery is null) return BadRequest(MNullObject(delivery));
+            if (Handler.LogPurchase(purchase, delivery)) return Ok(MOk);
+            else return StatusCode(500, MDBError);
         }
 
+        [Authorize(Policy = "AdminRequired")]
         [Route("/Purchases/SetDelivery")]
         [HttpPut]
         public IActionResult SetDelivery(string JSONDelivery)
         {
             Delivery? delivery = JsonConvert.DeserializeObject<Delivery>(JSONDelivery);
-            if (delivery is null) return BadRequest(NONM(delivery));
-            if (Handler.SetDelivery(delivery)) return Ok(OkM);
-            else return StatusCode(500, DBM);
+            if (delivery is null) return BadRequest(MNullObject(delivery));
+            if (Handler.SetDelivery(delivery)) return Ok(MOk);
+            else return StatusCode(500, MDBError);
         }
 
+        [Authorize(Policy = "AdminRequired")]
         [Route("/Purchases/SetPayment")]
         [HttpPut]
         public IActionResult SetPayment(string JSONPurchase)
         {
             Purchase? purchase = JsonConvert.DeserializeObject<Purchase>(JSONPurchase);
-            if (purchase is null) return BadRequest(NONM(purchase));
-            if (Handler.SetPayment(purchase)) return Ok(OkM);
-            else return StatusCode(500, DBM);
+            if (purchase is null) return BadRequest(MNullObject(purchase));
+            if (Handler.SetPayment(purchase)) return Ok(MOk);
+            else return StatusCode(500, MDBError);
         }
     }
 }

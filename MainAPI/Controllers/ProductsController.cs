@@ -1,6 +1,7 @@
 ﻿using MainAPI.Models;
 using MainAPI.Utils.DBHandlers;
 using MainAPI.Utils.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -21,12 +22,13 @@ namespace MainAPI.Controllers
             ProductCache = _ProductCache;
         }
 
+        [Authorize(Policy = "LoginRequired")]
         [Route("/Products/CheckCart")]
         [HttpGet]
         public IActionResult CheckCart(string JSONCart)
         {
             List<Product>? Cart = JsonConvert.DeserializeObject<List<Product>>(JSONCart);
-            if (Cart != null) return BadRequest(NONM(Cart));
+            if (Cart != null) return BadRequest(MNullObject(Cart));
             if (ProductCache.Cache is null || ProductCache.Cache.Count == 0) ProductCache.UpdateCache(Handler);
             Models.HttpReturn response = ProductCache.CheckCart(Cart);
             return StatusCode(response.HttpCode, response.Message);
@@ -42,34 +44,37 @@ namespace MainAPI.Controllers
             return Ok(JSONProductList);
         }
 
+        [Authorize(Policy = "AdminRequired")]
         [Route("/Products/AddProduct")]
         [HttpPost]
         public IActionResult AddProduct(string JSONProduct)
         {
             Product? product = JsonConvert.DeserializeObject<Product>(JSONProduct);
-            if (product is null) return BadRequest(NONM(product));
-            if (Handler.AddProduct(product)) return Ok(OkM);
-            else return StatusCode(501,DBM);
+            if (product is null) return BadRequest(MNullObject(product));
+            if (Handler.AddProduct(product)) return Ok(MOk);
+            else return StatusCode(501,MDBError);
         }
 
+        [Authorize(Policy = "AdminRequired")]
         [Route("/Products/UpdateProduct")]
         [HttpPut]
         public IActionResult UpdateProduct(string JSONProduct)
         {
             Product? Updates = JsonConvert.DeserializeObject<Product>(JSONProduct);
-            if (Updates is null) return BadRequest(NONM(Updates));
-            if (Handler.UpdateProduct(Updates)) return Ok(OkM);
-            else return StatusCode(501, DBM);
+            if (Updates is null) return BadRequest(MNullObject(Updates));
+            if (Handler.UpdateProduct(Updates)) return Ok(MOk);
+            else return StatusCode(501, MDBError);
         }
 
+        [Authorize(Policy = "AdminRequired")]
         [Route("/Products/DeleteProduct")]
         [HttpDelete]
         public IActionResult DeleteProduct(string JSONId)
         {
             Product? Id = JsonConvert.DeserializeObject<Product>(JSONId);
-            if (Id is null) return BadRequest(NONM(Id));
-            if (Handler.DeleteProduct(Id)) return Ok(OkM);
-            else return StatusCode(501, DBM);
+            if (Id is null) return BadRequest(MNullObject(Id));
+            if (Handler.DeleteProduct(Id)) return Ok(MOk);
+            else return StatusCode(501, MDBError);
         }
     }
 }
