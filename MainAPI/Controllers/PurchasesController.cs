@@ -18,9 +18,9 @@ namespace MainAPI.Controllers
         {
             Handler = _handler;
         }
-        [Authorize(Policy = "LoginRequired")]
+        [Authorize(Policy = "AdminRequired")]
         [Route("/Purchases/UserPurchases")]
-        [HttpGet]
+        [HttpGet] //Must create a new endpoint for users to access their own purchases
         public IActionResult UserPurchases(string JSONId)
         {
             User? Id = JsonConvert.DeserializeObject<User>(JSONId);
@@ -32,7 +32,7 @@ namespace MainAPI.Controllers
 
         [Authorize(Policy = "AdminRequired")]
         [Route("/Purchases/ShowPurchases")]
-        [HttpGet]
+        [HttpGet] 
         public IActionResult ShowPurchases()
         {
             List<Purchase> Purchases = Handler.GetAllPurchases();
@@ -42,7 +42,7 @@ namespace MainAPI.Controllers
 
         [Authorize(Policy = "LoginRequired")]
         [Route("/Purchases/LogPurchase")]
-        [HttpPost]
+        [HttpPost] //must change endpoint, handler and db so it uses cookie username
         public IActionResult LogPurchase(string JSONPurchase, string JSONDelivery)
         {
             Purchase? purchase = JsonConvert.DeserializeObject<Purchase>(JSONPurchase);
@@ -55,7 +55,7 @@ namespace MainAPI.Controllers
 
         [Authorize(Policy = "AdminRequired")]
         [Route("/Purchases/SetDelivery")]
-        [HttpPut]
+        [HttpPut] //maybe rethink this and next endpoint? (low priority)
         public IActionResult SetDelivery(string JSONDelivery)
         {
             Delivery? delivery = JsonConvert.DeserializeObject<Delivery>(JSONDelivery);
