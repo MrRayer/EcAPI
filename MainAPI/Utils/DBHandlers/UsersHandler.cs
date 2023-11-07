@@ -2,7 +2,6 @@
 using MainAPI.Utils.Helpers;
 using Dapper;
 using System.Data.SqlClient;
-using System.Diagnostics;
 using System.Data;
 
 namespace MainAPI.Utils.DBHandlers

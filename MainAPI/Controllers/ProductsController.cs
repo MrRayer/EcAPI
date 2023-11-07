@@ -68,7 +68,7 @@ namespace MainAPI.Controllers
 
         [Authorize(Policy = "AdminRequired")]
         [Route("/Products/DeleteProduct")]
-        [HttpDelete] // must change endpoint, handler and dbsp to use cookie name instead of id
+        [HttpDelete]
         public IActionResult DeleteProduct(string JSONId)
         {
             Product? Id = JsonConvert.DeserializeObject<Product>(JSONId);

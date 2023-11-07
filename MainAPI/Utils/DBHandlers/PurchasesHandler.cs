@@ -14,12 +14,12 @@ namespace MainAPI.Utils.DBHandlers
             Helper = _Helper;
         }
 
-        internal List<Purchase> GetUserPurchases(User User)
+        internal List<Purchase> GetUserPurchases(string User)
         {
             List<Purchase>? response;
             using (SqlConnection conn = new SqlConnection(Helper.ConnectionString))
             {
-                response = conn.Query<Purchase>($"dbo.GetUserPurchases '{User.Id}'").ToList();
+                response = conn.Query<Purchase>($"dbo.GetUserPurchases '{User}'").ToList();
             }
             if (response is null) response = new List<Purchase>();
             return response;

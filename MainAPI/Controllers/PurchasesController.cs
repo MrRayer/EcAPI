@@ -21,11 +21,11 @@ namespace MainAPI.Controllers
         [Authorize(Policy = "AdminRequired")]
         [Route("/Purchases/UserPurchases")]
         [HttpGet] //Must create a new endpoint for users to access their own purchases
-        public IActionResult UserPurchases(string JSONId)
+        public IActionResult UserPurchases()
         {
-            User? Id = JsonConvert.DeserializeObject<User>(JSONId);
-            if (Id is null) return BadRequest(MNullObject(Id));
-            List<Purchase>UserPurchases = Handler.GetUserPurchases(Id);
+            string nameClaim = User.Identity.Name;
+            if (nameClaim == null || nameClaim == "") return BadRequest(MEmptyClaim("Name"));
+            List<Purchase>UserPurchases = Handler.GetUserPurchases(nameClaim);
             if (UserPurchases is null) { return NotFound(MNotFound(UserPurchases)); }
             return new JsonResult(UserPurchases);
         }
@@ -43,14 +43,10 @@ namespace MainAPI.Controllers
         [Authorize(Policy = "LoginRequired")]
         [Route("/Purchases/LogPurchase")]
         [HttpPost] //must change endpoint, handler and db so it uses cookie username
-        public IActionResult LogPurchase(string JSONPurchase, string JSONDelivery)
+        public IActionResult LogPurchase(string JSONCart)
         {
-            Purchase? purchase = JsonConvert.DeserializeObject<Purchase>(JSONPurchase);
-            List<Delivery>? delivery = JsonConvert.DeserializeObject<List<Delivery>>(JSONDelivery);
-            if (purchase is null) return BadRequest(MNullObject(purchase));
-            if (delivery is null) return BadRequest(MNullObject(delivery));
-            if (Handler.LogPurchase(purchase, delivery)) return Ok(MOk);
-            else return StatusCode(500, MDBError);
+            List<Product> Cart = JsonConvert.DeserializeObject<List<Product>>(JSONCart);
+            return Ok("Success");
         }
 
         [Authorize(Policy = "AdminRequired")]

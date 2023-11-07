@@ -4,9 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using System.Diagnostics;
 using System.Security.Claims;
-using static Dapper.SqlMapper;
 using static MainAPI.Models.ErrorMessages;
 
 namespace MainAPI.Controllers
@@ -45,7 +43,7 @@ namespace MainAPI.Controllers
         [HttpGet]
         public IActionResult GetUser()
         {
-            string nameClaim = User.Identity.Name;
+            string? nameClaim = User.Identity.Name;
             if (nameClaim == null || nameClaim == "") return BadRequest(MEmptyClaim("Name"));
             User userInfo = Handler.GetUser(nameClaim);
             if (userInfo.CheckNewUser().HttpCode == 400) return NotFound(MNotFound(userInfo));
@@ -69,13 +67,13 @@ namespace MainAPI.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateUser(string JSONUpdates)
         {
-            string nameClaim = User.Identity.Name;
+            string? nameClaim = User.Identity.Name;
             if (nameClaim == null || nameClaim == "") return BadRequest(MEmptyClaim("Name"));
             User? updates = JsonConvert.DeserializeObject<User>(JSONUpdates);
             if (updates is null) return BadRequest(MNullObject(updates));
             if (!Handler.UpdateUser(nameClaim, updates)) return NotFound(MNotFound(nameClaim));
             ClaimsIdentity currentIdentity = (ClaimsIdentity)User.Identity;
-            ClaimsIdentity newIdentity = new ClaimsIdentity(
+            ClaimsIdentity newIdentity = new(
                 currentIdentity.Claims,
                 currentIdentity.AuthenticationType,
                 ClaimTypes.Name, updates.Username
