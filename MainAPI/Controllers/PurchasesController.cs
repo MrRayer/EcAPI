@@ -1,8 +1,6 @@
 ﻿using MainAPI.Models;
 using static MainAPI.Models.ErrorMessages;
 using MainAPI.Utils.DBHandlers;
-using MainAPI.Utils.Helpers;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Authorization;
@@ -14,16 +12,31 @@ namespace MainAPI.Controllers
     public class PurchasesController : ControllerBase
     {
         private readonly PurchasesHandler Handler;
-        public PurchasesController(PurchasesHandler _handler)
+        private readonly ProductsHandler PHandler;
+        private readonly ProductCache ProductCache;
+        public PurchasesController(PurchasesHandler _handler, ProductsHandler _phandler, ProductCache productCache)
         {
             Handler = _handler;
+            PHandler = _phandler;
+            ProductCache = productCache;
         }
+
+        [Route("/Products/GetProducts")]
+        [HttpGet]
+        public IActionResult GetProducts()
+        {
+            if (ProductCache.Cache is null || ProductCache.Cache.Count == 0) ProductCache.UpdateCache(PHandler);
+            string JSONProductList = JsonConvert.SerializeObject(ProductCache.Cache);
+            if (JSONProductList is null) return StatusCode(500, "Error retrieving product list from database");
+            return Ok(JSONProductList);
+        }
+
         [Authorize(Policy = "AdminRequired")]
         [Route("/Purchases/UserPurchases")]
         [HttpGet] //Must create a new endpoint for users to access their own purchases
         public IActionResult UserPurchases()
         {
-            string nameClaim = User.Identity.Name;
+            string? nameClaim = User.Identity.Name;
             if (nameClaim == null || nameClaim == "") return BadRequest(MEmptyClaim("Name"));
             List<Purchase>UserPurchases = Handler.GetUserPurchases(nameClaim);
             if (UserPurchases is null) { return NotFound(MNotFound(UserPurchases)); }
@@ -45,7 +58,13 @@ namespace MainAPI.Controllers
         [HttpPost] //must change endpoint, handler and db so it uses cookie username
         public IActionResult LogPurchase(string JSONCart)
         {
-            List<Product> Cart = JsonConvert.DeserializeObject<List<Product>>(JSONCart);
+            string? nameClaim = User.Identity.Name;
+            if (nameClaim == null || nameClaim == "") return BadRequest(MEmptyClaim("Name"));
+            List<Product>? Cart = JsonConvert.DeserializeObject<List<Product>>(JSONCart);
+            if (ProductCache.Cache is null || ProductCache.Cache.Count == 0) ProductCache.UpdateCache(PHandler);
+            Models.HttpReturn response = ProductCache.CheckCart(Cart);
+            if (response.HttpCode != 200) return StatusCode(response.HttpCode, response.Message);
+            if (!Handler.LogPurchase(Cart, nameClaim)) return StatusCode(500, MDBError);
             return Ok("Success");
         }
 

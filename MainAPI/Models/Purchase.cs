@@ -3,7 +3,7 @@
     public class Purchase
     {
         public int Id { get; set; }
-        public string Username { get; set; }
+        public string? Username { get; set; }
         public string? PaypalToken { get; set; }
         public bool PaymentStatus { get; set; }
         public bool Status { get; set; }

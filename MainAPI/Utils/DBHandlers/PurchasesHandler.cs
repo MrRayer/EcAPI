@@ -2,7 +2,6 @@
 using MainAPI.Models;
 using MainAPI.Utils.Helpers;
 using System.Data.SqlClient;
-using System.Diagnostics;
 
 namespace MainAPI.Utils.DBHandlers
 {
@@ -17,29 +16,29 @@ namespace MainAPI.Utils.DBHandlers
         internal List<Purchase> GetUserPurchases(string User)
         {
             List<Purchase>? response;
-            using (SqlConnection conn = new SqlConnection(Helper.ConnectionString))
+            using (SqlConnection conn = new (Helper.ConnectionString))
             {
                 response = conn.Query<Purchase>($"dbo.GetUserPurchases '{User}'").ToList();
             }
-            if (response is null) response = new List<Purchase>();
+            response ??= new List<Purchase>();
             return response;
         }
 
         internal List<Purchase> GetAllPurchases()
         {
             List<Purchase>? response;
-            using (SqlConnection conn = new SqlConnection(Helper.ConnectionString))
+            using (SqlConnection conn = new (Helper.ConnectionString))
             {
                 response = conn.Query<Purchase>($"dbo.GetAllPurchases").ToList();
             }
-            if (response is null) response = new List<Purchase>();
+            response ??= new List<Purchase>();
             return response;
         }
 
         internal bool SetDelivery(Delivery delivery)
         {
             bool response;
-            using (SqlConnection conn = new SqlConnection(Helper.ConnectionString))
+            using (SqlConnection conn = new (Helper.ConnectionString))
             {
                 response = conn.Query<bool>($"dbo.SetDelivery '{delivery.Id}','{delivery.Status}'").FirstOrDefault();
             }
@@ -49,22 +48,22 @@ namespace MainAPI.Utils.DBHandlers
         internal bool SetPayment(Purchase purchase)
         {
             bool response;
-            using (SqlConnection conn = new SqlConnection(Helper.ConnectionString))
+            using (SqlConnection conn = new (Helper.ConnectionString))
             {
                 response = conn.Query<bool>($"dbo.SetPayment '{purchase.Id}','{purchase.PaymentStatus}'").FirstOrDefault();
             }
             return response;
         }
 
-        internal bool LogPurchase(Purchase purchase, List<Delivery> deliveryList)
+        internal bool LogPurchase(List<Product> Cart, string Username)
         {
             bool deliveryResponse = true;
-            using (SqlConnection conn = new SqlConnection(Helper.ConnectionString))
+            using (SqlConnection conn = new (Helper.ConnectionString))
             {
-                int id = conn.Query<int>($"dbo.AddPurchase '{purchase.UserId}','{purchase.PaypalToken}'").FirstOrDefault();
-                foreach (Delivery delivery in deliveryList)
+                int id = conn.Query<int>($"dbo.AddPurchase '{Username}'").FirstOrDefault();
+                foreach (Product product in Cart)
                 {
-                    if (!conn.Query<bool>($"dbo.AddDelivery '{id}','{delivery.UserId}','{delivery.ProductId}'").FirstOrDefault()) deliveryResponse = false;
+                    if (!conn.Query<bool>($"dbo.AddDelivery '{id}','{Username}','{product.Id}'").FirstOrDefault()) deliveryResponse = false;
                 }
             }
             bool response;
